@@ -26,8 +26,22 @@ main ino file: src/main.cpp
 
 ## Hardware Requirements
 
-    Raspberry Pi Pico (or similar with UART)
-    AIR780 GSM/GPRS module
-    USB-to-Serial interface (for logging and manual input)
-    Optional: onboard LED (e.g., GPIO25 on Pico)
+Raspberry Pi Pico (or similar with UART)
 
+AIR780 GSM/GPRS module
+
+USB-to-Serial interface (for logging and manual input)
+
+Optional: onboard LED (e.g., GPIO25 on Pico)
+
+## create and install server
+
+
+```zsh
+cd air780-backend
+npm install                    
+docker build -t air780-server .
+
+cd ..
+
+```
