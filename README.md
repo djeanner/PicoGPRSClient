@@ -36,12 +36,40 @@ Optional: onboard LED (e.g., GPIO25 on Pico)
 
 ## create and install server
 
+in air780-backend/server.js
 
 ```zsh
 cd air780-backend
-npm install                    
-docker build -t air780-server .
+npm install
 
-cd ..
+echo "build and run server"
+docker build --platform=linux/amd64 -t air780-server .
+docker run --name air780-server -p 3000:3000 air780-server
+
+echo "add three entries to server"
+curl -X POST http://localhost:3000/submit -H "Content-Type: application/x-www-form-urlencoded" -d "device=AIR780&value=123"
+curl -X POST http://localhost:3000/submit -H "Content-Type: application/x-www-form-urlencoded" -d "device=AIR780&value=123"
+curl -X POST http://localhost:3000/submit -H "Content-Type: application/x-www-form-urlencoded" -d "device=AIR780&value=textInput"
+curl -X POST http://localhost:3000/submit -H "Content-Type: application/x-www-form-urlencoded" -d "device=AIR78ddddd0&value=textInput"
+
+# wget http://localhost:3000/data -O -
+echo "open in browser http://localhost:3000/data or store all data :"
+wget http://localhost:3000/data -O test/dataStored.json
+
+echo "get single element"
+wget "http://localhost:3000/data?index=0" -O test/dataStored0.json
+
+echo "get single device remove from main arrays"
+wget "http://localhost:3000/data?device=AIR780" -O test/dataStored_AIR780.json
+
+echo "stop server"
+docker stop air780-server
+docker rm air780-server
+echo "List active servers (run docker ps -a)"
+docker ps -a  
+
+echo "related commands"
+echo "docker container prune ---- if needed after        "
+echo "open http://localhost:3000/data in browser → should return [] at start"
 
 ```
