@@ -2,7 +2,7 @@
 const express = require("express");
 const fs = require("fs");
 const app = express();
-const port = 3000;
+const PORT = process.env.PORT || 3000;
 
 let dataStored = [];
 
@@ -57,6 +57,7 @@ app.get("/data", (req, res) => {
 	res.json(dataStored);
 });
 
-app.listen(port, () => {
-	console.log(`Server V0.2 running on http://localhost:${port}`);
+
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server V0.2 running on http://0.0.0.0:${PORT}`);
 });
