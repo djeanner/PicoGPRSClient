@@ -58,6 +58,11 @@ app.get("/data", (req, res) => {
 });
 
 
+// Add this before app.listen
+app.get('/', (req, res) => {
+  res.send('📡 PicoGPRSClient is running. Use POST /submit or GET /data');
+});
+
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server V0.2 running on http://0.0.0.0:${PORT}`);
 });
