@@ -1,16 +1,16 @@
-bool verbose = true;       // Set to false to reduce serial prints
-bool testHttpBin = false;  // True to test testHttpBin
-bool passthroughEnabled = false; // true, to manually send commands with usb serial port - not sure works
+bool verbose = true;              // Set to false to reduce serial prints
+bool testHttpBin = false;         // True to test testHttpBin
+bool passthroughEnabled = false;  // true, to manually send commands with usb serial port - not sure works
 
 const char* hostTestHttpBin = "httpbin.org";
 const char* host = "httpbin.org";
 
 #define AIR780 Serial1
 #define ENABLE_BLINK       // Comment this line to disable LED blinking
-#define ENABLE_USB_SERIAL  // Comment this line to disable terminal connection to usb serial port
+// #define ENABLE_USB_SERIAL  // Comment this line to disable terminal connection to usb serial port
 
 #ifdef ENABLE_BLINK
-const int ledPin = 25;  // Onboard LED pin on Raspberry Pi Pico
+const int ledPinBlink = 25;  // Onboard LED pin on Raspberry Pi Pico
 #endif
 
 #ifdef ENABLE_USB_SERIAL
@@ -30,12 +30,12 @@ void shortBlinks(int n, bool fastProblem = false) {
   const int numberCylcles = fastProblem ? 5 : 2;
   for (int j = 0; j < numberCylcles; j++) {
     for (int i = 0; i < n; i++) {
-      const int durationOn = fastProblem ? 50 : 200;
-      const int durationOff = fastProblem ? 80 : 300;
-      digitalWrite(ledPin, HIGH);
-      delay(durationOn);  // LED on for 100ms
-      digitalWrite(ledPin, LOW);
-      delay(durationOff);  // LED off for 100ms
+      const int durationOn = fastProblem ? 50 : 200;   // LED on in ms
+      const int durationOff = fastProblem ? 200 : 300;   // LED off in ms
+      digitalWrite(ledPinBlink, HIGH);
+      delay(durationOn);
+      digitalWrite(ledPinBlink, LOW);
+      delay(durationOff);
     }
     delay(1000);
   }
@@ -70,8 +70,7 @@ void sendHTTPRequest(const char* host, const char* path, const char* payload) {
   delay(500);
 
   String request =
-    String("POST ") + path + " HTTP/1.1\r\n" + "Host: " + host + "\r\n" + "Content-Type: application/x-www-form-urlencoded\r\n" + "Content-Length: " + 
-    String(strlen(payload)) + "\r\n" + "Connection: close\r\n\r\n" + payload;
+    String("POST ") + path + " HTTP/1.1\r\n" + "Host: " + host + "\r\n" + "Content-Type: application/x-www-form-urlencoded\r\n" + "Content-Length: " + String(strlen(payload)) + "\r\n" + "Connection: close\r\n\r\n" + payload;
 
   AIR780.print(request);
   AIR780.write(0x1A);
@@ -122,7 +121,7 @@ void sendHTTPRequest(const char* host, const char* path, const char* payload) {
 
 void setup() {
 #ifdef ENABLE_BLINK
-  pinMode(ledPin, OUTPUT);
+  pinMode(ledPinBlink, OUTPUT);
 #endif
 #ifdef ENABLE_USB_SERIAL
   SerUSB.begin(9600);
@@ -157,13 +156,15 @@ void setup() {
 
   //runDiagnostics();
 
-  if (!waitForReady()) return;
-
+  if (!waitForReady()) {
+    shortBlinks(4, true);  // four flashes incate problem with AIR780 module
+    return;
+  }
   configureAPN("internet");  // Replace with your real APN
   attachGPRS();
 
   //const char* host = "chemedata.github.io/ontologies/chemedata/playground/chemedata.owl";//"www.neverssl.com";
-  
+
   const int port = 80;
   const int maxAttempts = 3;
 
@@ -407,7 +408,31 @@ bool waitForReady() {
       logToSerial("Module registered and GPRS attached.");
       return true;
     }
-
+    if (creg.indexOf("+CREG: 0,5") >= 0 && cgatt.indexOf("+CGATT: 1") >= 0) {
+      logToSerial("Module registered and GPRS attached with roaming.");
+      return true;
+    }
+    if (creg.indexOf("+CREG: 0,0") >= 0) {
+      logToSerial("Not registered, not currently searching for a new operator");
+    }
+    if (creg.indexOf("+CREG: 0,2") >= 0) {
+      logToSerial("Not registered, but searching for a new operator");
+    }
+    if (creg.indexOf("+CREG: 0,3") >= 0) {
+      logToSerial("Registration denied");
+    }
+    if (creg.indexOf("+CREG: 0,4") >= 0) {
+      logToSerial("Unknown");
+    }
+    /*
+stat value	Meaning
+0	Not registered, not currently searching for a new operator
+1	Registered, home network
+2	Not registered, but searching for a new operator
+3	Registration denied
+4	Unknown
+5	Registered, roaming
+*/
     delay(1000);
   }
 

@@ -42,8 +42,12 @@ in air780-backend/server.js
 cd air780-backend
 npm install
 
-echo "build and run server"
+echo "build server"
 docker build --platform=linux/amd64 -t air780-server .
+
+echo "**********************************************************************"
+echo "run server locally (not getting data from air780 - only to test server code)"
+
 docker run --name air780-server -p 3000:3000 air780-server
 
 echo "add three entries to server"
@@ -52,6 +56,7 @@ curl -X POST http://localhost:3000/submit -H "Content-Type: application/x-www-fo
 curl -X POST http://localhost:3000/submit -H "Content-Type: application/x-www-form-urlencoded" -d "device=AIR780&value=textInput"
 curl -X POST http://localhost:3000/submit -H "Content-Type: application/x-www-form-urlencoded" -d "device=AIR78ddddd0&value=textInput"
 
+# echo "use '-' instead of filename to dump output to stdout"
 # wget http://localhost:3000/data -O -
 echo "open in browser http://localhost:3000/data or store all data :"
 wget http://localhost:3000/data -O test/dataStored.json
@@ -71,5 +76,7 @@ docker ps -a
 echo "related commands"
 echo "docker container prune ---- if needed after        "
 echo "open http://localhost:3000/data in browser → should return [] at start"
+
+
 
 ```
