@@ -1,1 +1,57 @@
-[{"timestamp":"2025-06-03T09:34:59.856Z","device":"AIR780","value":"4"}][{"timestamp":"2025-06-03T09:36:36.589Z","device":"AIR780","value":"6"},{"timestamp":"2025-06-03T09:38:13.336Z","device":"AIR780","value":"8"},{"timestamp":"2025-06-03T09:39:50.079Z","device":"AIR780","value":"10"},{"timestamp":"2025-06-03T09:41:26.907Z","device":"AIR780","value":"12"},{"timestamp":"2025-06-03T09:43:03.635Z","device":"AIR780","value":"14"},{"timestamp":"2025-06-03T09:44:40.440Z","device":"AIR780","value":"16"},{"timestamp":"2025-06-03T09:46:17.290Z","device":"AIR780","value":"18"}]
+[
+  {
+    "timestamp": "2025-06-03T09:36:36.589Z",
+    "device": "AIR780",
+    "value": "6"
+  },
+  {
+    "timestamp": "2025-06-03T09:38:13.336Z",
+    "device": "AIR780",
+    "value": "8"
+  },
+  {
+    "timestamp": "2025-06-03T09:39:50.079Z",
+    "device": "AIR780",
+    "value": "10"
+  },
+  {
+    "timestamp": "2025-06-03T09:41:26.907Z",
+    "device": "AIR780",
+    "value": "12"
+  },
+  {
+    "timestamp": "2025-06-03T09:43:03.635Z",
+    "device": "AIR780",
+    "value": "14"
+  },
+  {
+    "timestamp": "2025-06-03T09:44:40.440Z",
+    "device": "AIR780",
+    "value": "16"
+  },
+  {
+    "timestamp": "2025-06-03T09:46:17.290Z",
+    "device": "AIR780",
+    "value": "18"
+  },
+  {
+    "timestamp": "2025-06-03T09:54:24.827Z",
+    "device": "AIR780",
+    "value": "28"
+  },
+  {
+    "timestamp": "2025-06-03T09:55:40.156Z",
+    "device": "AIR780",
+    "value": "123"
+  },
+  {
+    "timestamp": "2025-06-03T09:55:40.182Z",
+    "device": "AIR780",
+    "value": "124"
+  },
+  {
+    "timestamp": "2025-06-03T09:55:40.209Z",
+    "device": "AIR780",
+    "value": "125"
+  }
+]

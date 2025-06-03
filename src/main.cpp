@@ -1,6 +1,6 @@
+
 bool verbose = true;              // Set to false to reduce serial prints
 bool testHttpBin = false;         // True to test testHttpBin
-bool passthroughEnabled = false;  // true, to manually send commands with usb serial port - not sure works
 unsigned long counter = 0;
 const char* hostTestHttpBin = "httpbin.org";
 const char* host = "193.134.93.138";
@@ -195,7 +195,6 @@ bool connectTCP(const char* host, int port) {
 
 
 void sendHTTPRequestOLDnotWorking(const char* host) {
-  passthroughEnabled = false;  // 🛑 disable echo
   flushSerialInput();          // ✅ Wipe out any leftover serial input
   //sendCommand("AT+CIPSEND", 1000);
   //delay(500);
@@ -237,36 +236,12 @@ void sendHTTPRequestOLDnotWorking(const char* host) {
   logToSerial("[Server Response Start]");
   logToSerial(fullMessage.c_str());
   logToSerial("[Server Response End]");
-  passthroughEnabled = true;  // ✅ enable again if needed
 }
 
 
 void disconnectTCP() {
   sendCommand("AT+CIPCLOSE", 1000);
   delay(500);
-}
-
-void passthroughSerial() {
-  if (!passthroughEnabled) return;
-#ifdef ENABLE_USB_SERIAL
-
-  if (SerUSB.available()) {
-    String command = SerUSB.readStringUntil('\n');
-    command.trim();
-    if (command.length() > 0) {
-      AIR780.println(command);
-    }
-  }
-#endif
-
-  while (AIR780.available()) {
-#ifdef ENABLE_USB_SERIAL
-    char c = AIR780.read();
-    SerUSB.write(c);
-#else
-    AIR780.read();
-#endif
-  }
 }
 
 void sendAT(const char* cmd, unsigned long timeout = 1000) {
@@ -478,10 +453,9 @@ void setup() {
 }
 
 void loop() {
-  // passthroughSerial();  // Let user interact manually
   wakeModem();  // Power up network stack
   counter++;
-  String mainData = "device=AIR780&value=" + String(counter);
+  String mainData = "device=AIR780&set=2&value=" + String(counter);
   sendDataOnce(mainData.c_str());  // Send to server
 
   shutdownModem();  // Shut everything down

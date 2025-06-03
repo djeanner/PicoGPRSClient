@@ -22,8 +22,6 @@ main ino file: src/main.cpp
 
     testHttpBin: Set to true to test response parsing and device echo from httpbin
 
-    passthroughEnabled: When true, allows manual command interaction with AIR780 over USB
-
 ## Hardware Requirements
 
 Raspberry Pi Pico (or similar with UART)
@@ -93,33 +91,23 @@ curl -X POST http://193.134.93.138:3000/submit -H "Content-Type: application/x-w
 curl -X POST http://193.134.93.138:3000/submit -H "Content-Type: application/x-www-form-urlencoded" -d "device=AIZZR780&value=0"
 
 echo "open in browser http://193.134.93.138:3000/ or store all data :"
-wget http://193.134.93.138:3000/data -O test/dataStored.json
+wget http://193.134.93.138:3000/data -O - | jq > test/dataStored.json
 
 echo "get single element"
-wget "http://193.134.93.138:3000/data?index=0" -O test/dataStored0.json
+wget "http://193.134.93.138:3000/data?index=0" -O - | jq >test/dataStored0.json
 
-echo "get single device remove from main arrays"
-wget "http://193.134.93.138:3000/data?device=AIR780" -O test/dataStored_AIR780_tmp.json;
-cat test/dataStored_AIR780_tmp.json >> test/dataStored_AIR780.json
-rm test/dataStored_AIR780_tmp.json
+echo "get single device remove from main arrays add incremenetally to test/dataStored_AIR780.json "
+wget "http://193.134.93.138:3000/data?device=AIR780" -O  test/dataStored_AIR780_tmp.json;
+jq -s '.[0] + .[1]' test/dataStored_AIR780.json test/dataStored_AIR780_tmp.json > test/tmp && mv test/tmp test/dataStored_AIR780.json
+rm test/dataStored_AIR780_tmp.json test/tmp
 
+```
 
-echo "set up duckdns at https://www.duckdns.org/domains"
-# 10.113.248.55 
-# https://www.duckdns.org/login-github?code=9ae9688cce49768c0f77&state=uhoibougyohouhpyh87yy
-# DONT FO THIS . IT WOULD USE TE COMPUTER IP ; NOT THE ROUTER 
-# echo url="http://www.duckdns.org/update?domains=damserv&token=e99dd4b7-246f-45cf-8da2-709d5d6b5c00&ip=" | curl -k -o ~/duck.log -K -
-echo "look at ip at https://salt.box/2.0/gui/#/internetConnectivity/status"
-
-wget "http://damserv.duckdns.org:3000/data" -O -
-
-
-
-
-ON jpc (formerly jelastic)
+On jpc (formerly jelastic)
 have a Docker Engine CE, with a Engine Node inside
 From the later click the terminal icon "web ssh"
 and paste all the following:
+```
 
 git clone https://github.com/djeanner/PicoGPRSClient.git
 cd PicoGPRSClient
@@ -127,8 +115,11 @@ docker build --platform=linux/amd64 -t air780-server .
 docker run -d --name air780-server -p 3000:3000 air780-server
 echo "check running:"
 docker ps
+```
 
+to update  ...
 
+```
 
 cd PicoGPRSClient
 git pull
@@ -136,3 +127,4 @@ docker stop air780-server
 docker rm air780-server
 docker build -t air780-server .
 docker run -d --name air780-server -p 3000:3000 air780-server
+```
