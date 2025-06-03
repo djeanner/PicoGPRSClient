@@ -39,7 +39,6 @@ Optional: onboard LED (e.g., GPIO25 on Pico)
 in air780-backend/server.js
 
 ```zsh
-cd air780-backend
 npm install
 
 echo "build server"
@@ -47,7 +46,7 @@ docker build --platform=linux/amd64 -t air780-server .
 
 echo "**********************************************************************"
 echo "run server locally (not getting data from air780 - only to test server code)"
-
+docker rm -f air780-server 2>/dev/null
 docker run --name air780-server -p 3000:3000 air780-server
 
 echo "add three entries to server"
@@ -84,9 +83,9 @@ echo "open http://localhost:3000/data in browser → should return [] at start"
 
 
 ```zsh
-
+# brew install cloudflared
 docker run --name air780-server -p 3000:3000 air780-server
-
+cloudflared tunnel --url http://localhost:3000
 echo "add three entries to server" 
 
 curl -X POST http://10.113.248.55:3000/submit -H "Content-Type: application/x-www-form-urlencoded" -d "device=AIR780&value=123"
@@ -95,6 +94,7 @@ curl -X POST https://picogprsclient.onrender.com/submit -H "Content-Type: applic
 curl -X POST https://picogprsclient.onrender.com/submit -H "Content-Type: application/x-www-form-urlencoded" -d "device=AIR780&value=textInput"
 curl -X POST https://picogprsclient.onrender.com/submit -H "Content-Type: application/x-www-form-urlencoded" -d "device=AIR78ddddd0&value=textInput"
 
+curl --data "device=AIR780&value=123" https://10.113.248.55:3000/submit
 curl --data "device=AIR780&value=123" https://damserv.duckdns.org:3000/submit
 curl --data "device=AIR780&value=123" https://picogprsclient.onrender.com/submit
 curl --data "device=AIR780&value=125" https://picogprsclient.onrender.com/submit
@@ -114,9 +114,12 @@ wget "http://10.113.248.55:3000/data?device=AIR780" -O test/dataStored_AIR780_On
 
 
 echo "set up duckdns at https://www.duckdns.org/domains"
+# 10.113.248.55 
+# https://www.duckdns.org/login-github?code=9ae9688cce49768c0f77&state=uhoibougyohouhpyh87yy
 # DONT FO THIS . IT WOULD USE TE COMPUTER IP ; NOT THE ROUTER 
 # echo url="http://www.duckdns.org/update?domains=damserv&token=e99dd4b7-246f-45cf-8da2-709d5d6b5c00&ip=" | curl -k -o ~/duck.log -K -
 echo "look at ip at https://salt.box/2.0/gui/#/internetConnectivity/status"
 
 wget "http://damserv.duckdns.org:3000/data" -O -
 wget "http://10.113.248.55:3000/data" -O -
+damserv
