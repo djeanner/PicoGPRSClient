@@ -7,6 +7,7 @@
 // Rx blue  / 1
 // Tx green / 2
 
+const int setNumber = 3; // sent to server
 bool verbose = true;  // Set to false to reduce serial prints
 unsigned long counter = 0;
 
@@ -428,7 +429,7 @@ void setup() {
 void loop() {
   wakeModem();  // Power up network stack
   counter++;
-  String mainData = "device=AIR780&set=3&value=" + String(counter);
+  String mainData = "device=AIR780&set=" + String(setNumber) + "&value=" + String(counter);
   sendDataOnce(mainData.c_str());  // Send to server up to 200–500 mA for AIT780EU
 
   shutdownModem();  // Shut everything down ~5–10 mA for AIT780EU
