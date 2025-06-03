@@ -52,7 +52,7 @@ docker run --name air780-server -p 3000:3000 air780-server
 
 echo "add three entries to server"
 curl -X POST http://localhost:3000/submit -H "Content-Type: application/x-www-form-urlencoded" -d "device=AIR780&value=123"
-curl -X POST http://localhost:3000/submit -H "Content-Type: application/x-www-form-urlencoded" -d "device=AIR780&value=123"
+curl -X POST http://localhost:3000/submit -H "Content-Type: application/x-www-form-urlencoded" -d "device=AIR780&value=124"
 curl -X POST http://localhost:3000/submit -H "Content-Type: application/x-www-form-urlencoded" -d "device=AIR780&value=textInput"
 curl -X POST http://localhost:3000/submit -H "Content-Type: application/x-www-form-urlencoded" -d "device=AIR78ddddd0&value=textInput"
 
@@ -80,3 +80,43 @@ echo "open http://localhost:3000/data in browser → should return [] at start"
 
 
 ```
+
+
+
+```zsh
+
+docker run --name air780-server -p 3000:3000 air780-server
+
+echo "add three entries to server" 
+
+curl -X POST http://10.113.248.55:3000/submit -H "Content-Type: application/x-www-form-urlencoded" -d "device=AIR780&value=123"
+curl -X POST http://damserv.duckdns.org:3000/submit -H "Content-Type: application/x-www-form-urlencoded" -d "device=AIR780&value=123"
+curl -X POST https://picogprsclient.onrender.com/submit -H "Content-Type: application/x-www-form-urlencoded" -d "device=AIR780&value=124"
+curl -X POST https://picogprsclient.onrender.com/submit -H "Content-Type: application/x-www-form-urlencoded" -d "device=AIR780&value=textInput"
+curl -X POST https://picogprsclient.onrender.com/submit -H "Content-Type: application/x-www-form-urlencoded" -d "device=AIR78ddddd0&value=textInput"
+
+curl --data "device=AIR780&value=123" https://damserv.duckdns.org:3000/submit
+curl --data "device=AIR780&value=123" https://picogprsclient.onrender.com/submit
+curl --data "device=AIR780&value=125" https://picogprsclient.onrender.com/submit
+curl --data "device=AIR780&value=textInput" https://picogprsclient.onrender.com/submit
+curl --data "device=AIR78ddddd0&value=textInput" https://picogprsclient.onrender.com/submit
+
+
+echo "open in browser https://picogprsclient.onrender.com/data or store all data :"
+wget https://picogprsclient.onrender.com/data -O test/dataStored_OnRender.json
+
+echo "get single element"
+wget "https://picogprsclient.onrender.com/data?index=0" -O test/dataStored0_OnRender.json
+
+echo "get single device remove from main arrays"
+wget "https://picogprsclient.onrender.com/data?device=AIR780" -O test/dataStored_AIR780_OnRender.json
+wget "http://10.113.248.55:3000/data?device=AIR780" -O test/dataStored_AIR780_OnRender.json
+
+
+echo "set up duckdns at https://www.duckdns.org/domains"
+# DONT FO THIS . IT WOULD USE TE COMPUTER IP ; NOT THE ROUTER 
+# echo url="http://www.duckdns.org/update?domains=damserv&token=e99dd4b7-246f-45cf-8da2-709d5d6b5c00&ip=" | curl -k -o ~/duck.log -K -
+echo "look at ip at https://salt.box/2.0/gui/#/internetConnectivity/status"
+
+wget "http://damserv.duckdns.org:3000/data" -O -
+wget "http://10.113.248.55:3000/data" -O -
