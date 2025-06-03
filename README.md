@@ -34,7 +34,8 @@ Optional: onboard LED (e.g., GPIO25 on Pico)
 
 ## create and install server
 
-For local tests
+For local tests (to develop and test your server) :
+ 
 ```zsh
 
 echo "install node modules if needed"
@@ -76,15 +77,11 @@ echo "open http://localhost:3000/data in browser → should return [] at start"
 
 ```
 
-Install on server accepting http (not https)
+Installed on server (see below) accepting http (not https)
 we used https://app.jpc.infomaniak.com/
 
 ```zsh
-# brew install cloudflared
-docker run --name air780-server -p 3000:3000 air780-server
-
 echo "add entries to server" 
-
 curl -X POST http://193.134.93.138:3000/submit -H "Content-Type: application/x-www-form-urlencoded" -d "device=AIR780&value=123"
 curl -X POST http://193.134.93.138:3000/submit -H "Content-Type: application/x-www-form-urlencoded" -d "device=AIR780&value=124"
 curl -X POST http://193.134.93.138:3000/submit -H "Content-Type: application/x-www-form-urlencoded" -d "device=AIR780&value=125"
@@ -102,12 +99,15 @@ jq -s '.[0] + .[1]' test/dataStored_AIR780.json test/dataStored_AIR780_tmp.json 
 rm test/dataStored_AIR780_tmp.json test/tmp
 ```
 
-On jpc (formerly jelastic)
+## setting up server
+
+
+On jpc (formerly jelastic) 
 have a Docker Engine CE, with a Engine Node inside
 From the later click the terminal icon "web ssh"
 and paste all the following:
-```
 
+```zsh
 git clone https://github.com/djeanner/PicoGPRSClient.git
 cd PicoGPRSClient
 docker build --platform=linux/amd64 -t air780-server .
@@ -118,8 +118,7 @@ docker ps
 
 to update  ...
 
-```
-
+```zsh
 cd PicoGPRSClient
 git pull
 docker stop air780-server
