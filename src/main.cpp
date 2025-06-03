@@ -1,12 +1,16 @@
+// for pi pico with a gravity uart (AIR7880EU chip) 4G CAT I mocules V1.0 connected with
+// gravity board / pi pico
+// GND black/ 37
+// VCC red  / 35
+// Rx blue  / 1
+// Tx green / 2
 
-bool verbose = true;              // Set to false to reduce serial prints
-bool testHttpBin = false;         // True to test testHttpBin
+bool verbose = true;  // Set to false to reduce serial prints
 unsigned long counter = 0;
-const char* hostTestHttpBin = "httpbin.org";
 const char* host = "193.134.93.138";
 const int port = 3000;
 #define AIR780 Serial1
-#define ENABLE_BLINK       // Comment this line to disable LED blinking
+#define ENABLE_BLINK  // Comment this line to disable LED blinking
 // #define ENABLE_USB_SERIAL  // Comment this line to disable terminal connection to usb serial port
 
 #ifdef ENABLE_BLINK
@@ -108,15 +112,6 @@ void sendHTTPRequest(const char* host, const char* path, const char* payload) {
   SerUSB.print(fullMessage);
   SerUSB.println("[Server Response End]");
 #endif
-  if (testHttpBin) {
-    if (fullMessage.indexOf("\"device\": \"AIR780\"") >= 0) {
-      logToSerial("testHttpBin true: TEST OK Found device field in json in response");
-      shortBlinks(5, false);  // false for OK
-    } else {
-      logToSerial("testHttpBin true: TEST FAILED Did not found device field in json in response");
-      shortBlinks(5, true);  // true for ERROR
-    }
-  }
 
   if (!fullMessage.endsWith("CLOSED\r\n")) {
     disconnectTCP();
@@ -126,10 +121,10 @@ void sendHTTPRequest(const char* host, const char* path, const char* payload) {
 void shutdownModem() {
   logToSerial("Shutting down modem...");
 
-  sendCommand("AT+CIPCLOSE", 1000);   // Close TCP
-  sendCommand("AT+CIPSHUT", 2000);    // Shut IP stack
-  sendCommand("AT+CGATT=0", 1000);    // Detach from GPRS
-  sendCommand("AT+CFUN=0", 1000);     // Minimum functionality mode
+  sendCommand("AT+CIPCLOSE", 1000);  // Close TCP
+  sendCommand("AT+CIPSHUT", 2000);   // Shut IP stack
+  sendCommand("AT+CGATT=0", 1000);   // Detach from GPRS
+  sendCommand("AT+CFUN=0", 1000);    // Minimum functionality mode
 
   shortBlinks(2);  // Feedback
   logToSerial("Modem in low-power mode.");
@@ -138,8 +133,8 @@ void shutdownModem() {
 void wakeModem() {
   logToSerial("Waking modem...");
 
-  sendCommand("AT+CFUN=1", 3000);     // Restore full functionality
-  delay(2000);                        // Give time to come up
+  sendCommand("AT+CFUN=1", 3000);  // Restore full functionality
+  delay(2000);                     // Give time to come up
 
   if (!waitForReady()) {
     logToSerial("Modem failed to wake up.");
@@ -195,7 +190,7 @@ bool connectTCP(const char* host, int port) {
 
 
 void sendHTTPRequestOLDnotWorking(const char* host) {
-  flushSerialInput();          // ✅ Wipe out any leftover serial input
+  flushSerialInput();  // ✅ Wipe out any leftover serial input
   //sendCommand("AT+CIPSEND", 1000);
   //delay(500);
 
@@ -392,8 +387,7 @@ void sendDataOnce(const char* data) {
     logToSerial("/", false);
     logToSerial(String(maxAttempts).c_str(), false);
     logToSerial("] Connecting...");
-    if ((testHttpBin && connectTCP(hostTestHttpBin, port)) ||
-        (!testHttpBin && connectTCP(host, port))) {
+    if (connectTCP(host, port)) {
       connected = true;
       break;
     }
@@ -401,11 +395,7 @@ void sendDataOnce(const char* data) {
   }
 
   if (connected) {
-    if (testHttpBin) {
-      sendHTTPRequest("httpbin.org", "/post", "device=AIR780&value=128");
-    } else {
-      sendHTTPRequest(host, "/submit", data);
-    }
+    sendHTTPRequest(host, "/submit", data);
   } else {
     logToSerial("All connection attempts failed. Giving up.");
     shortBlinks(5, true);
@@ -461,5 +451,6 @@ void loop() {
   shutdownModem();  // Shut everything down
 
   //logToSerial("Sleeping for 1 hour...");delay(3600000);  // Wait 1 hour (60 min × 60 sec × 1000 ms)
-  logToSerial("Sleeping for 1 min...");delay(60000);  // Wait 1 min (60 sec × 1000 ms)
+  logToSerial("Sleeping for 1 min...");
+  delay(60000);  // Wait 1 min (60 sec × 1000 ms)
 }
