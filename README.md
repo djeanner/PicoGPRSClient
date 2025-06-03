@@ -92,7 +92,7 @@ curl -X POST http://193.134.93.138:3000/submit -H "Content-Type: application/x-w
 
 echo "open in browser http://193.134.93.138:3000/ or store all data :"
 wget http://193.134.93.138:3000/data -O - | jq > test/dataStored.json
-
+wget "http://[2001:1600:112::6:dc00]:3000/data" -O - | jq > test/dataStored.json
 echo "get single element"
 wget "http://193.134.93.138:3000/data?index=0" -O - | jq >test/dataStored0.json
 
@@ -100,7 +100,6 @@ echo "get single device remove from main arrays add incremenetally to test/dataS
 wget "http://193.134.93.138:3000/data?device=AIR780" -O  test/dataStored_AIR780_tmp.json;
 jq -s '.[0] + .[1]' test/dataStored_AIR780.json test/dataStored_AIR780_tmp.json > test/tmp && mv test/tmp test/dataStored_AIR780.json
 rm test/dataStored_AIR780_tmp.json test/tmp
-
 ```
 
 On jpc (formerly jelastic)

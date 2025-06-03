@@ -35,3 +35,5 @@ build/
 # Coverage/test results
 coverage/
 .nyc_output/
+
+src/secrets.h

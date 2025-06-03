@@ -1,3 +1,11 @@
+#include "secrets.h"
+
+// in secret.h set the ip of the server
+/*
+const char* SERVER_HOST = "AAA.BBB.CCC.DDD"; // replace with the ip number
+const int SERVER_PORT = 3000;
+*/
+
 // for pi pico with a gravity uart (AIR7880EU chip) 4G CAT I mocules V1.0 connected with
 // gravity board / pi pico
 // GND black/ 37
@@ -7,8 +15,7 @@
 
 bool verbose = true;  // Set to false to reduce serial prints
 unsigned long counter = 0;
-const char* host = "193.134.93.138";
-const int port = 3000;
+
 #define AIR780 Serial1
 #define ENABLE_BLINK  // Comment this line to disable LED blinking
 // #define ENABLE_USB_SERIAL  // Comment this line to disable terminal connection to usb serial port
