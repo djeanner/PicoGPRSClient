@@ -1,8 +1,11 @@
 # PicoGPRSClient
-This Arduino sketch is designed to test and debug GPRS-based HTTP POST requests using the AIR780 module (via AT commands) on platforms like the Raspberry Pi Pico (or compatible boards).
+This repository show how to use :
 
-main ino file: src/main.cpp
-## Features
+1) A Arduino sketch designed to use (debug and test) GPRS-based HTTP POST requests using the AIR780 module (via AT commands) on platforms like the Raspberry Pi Pico (or compatible boards).
+
+2) A Docker server receiving data from the above-mentioned module and allowing retrieval of the data.
+
+## Features of the Pi Pico sketch
 
     ✅ Verbose debug mode (verbose = true) for rich serial logging
 
@@ -16,23 +19,19 @@ main ino file: src/main.cpp
 
     🔍 Includes basic diagnostic AT commands for signal, registration, operator, etc.
 
-## Configuration
+### Configuration
 
     verbose: Set to false to reduce serial output
 
     testHttpBin: Set to true to test response parsing and device echo from httpbin
 
-## Hardware Requirements
+### Hardware Requirements
 
 Raspberry Pi Pico (or similar with UART)
 
 AIR780 GSM/GPRS module
 
-USB-to-Serial interface (for logging and manual input)
-
-Optional: onboard LED (e.g., GPIO25 on Pico)
-
-## create and install server
+## Create and install the server
 
 For local tests (to develop and test your server) :
  
