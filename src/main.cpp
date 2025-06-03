@@ -1,10 +1,10 @@
 bool verbose = true;              // Set to false to reduce serial prints
 bool testHttpBin = false;         // True to test testHttpBin
 bool passthroughEnabled = false;  // true, to manually send commands with usb serial port - not sure works
-
+unsigned long counter = 0;
 const char* hostTestHttpBin = "httpbin.org";
-const char* host = "httpbin.org";
-
+const char* host = "193.134.93.138";
+const int port = 3000;
 #define AIR780 Serial1
 #define ENABLE_BLINK       // Comment this line to disable LED blinking
 // #define ENABLE_USB_SERIAL  // Comment this line to disable terminal connection to usb serial port
@@ -17,10 +17,14 @@ const int ledPinBlink = 25;  // Onboard LED pin on Raspberry Pi Pico
 #define SerUSB Serial  // rename to facilitate debug Serial is the USB ser port
 #endif
 
-void logToSerial(const char* msg) {
+void logToSerial(const char* msg, const bool endOfLine = true) {
 #ifdef ENABLE_USB_SERIAL
   if (verbose) {
-    SerUSB.println(msg);
+    if (endOfLine) {
+      SerUSB.println(msg);
+    } else {
+      SerUSB.print(msg);
+    }
   }
 #endif
 }
@@ -30,8 +34,8 @@ void shortBlinks(int n, bool fastProblem = false) {
   const int numberCylcles = fastProblem ? 5 : 2;
   for (int j = 0; j < numberCylcles; j++) {
     for (int i = 0; i < n; i++) {
-      const int durationOn = fastProblem ? 50 : 200;   // LED on in ms
-      const int durationOff = fastProblem ? 200 : 300;   // LED off in ms
+      const int durationOn = fastProblem ? 50 : 200;    // LED on in ms
+      const int durationOff = fastProblem ? 300 : 300;  // LED off in ms
       digitalWrite(ledPinBlink, HIGH);
       delay(durationOn);
       digitalWrite(ledPinBlink, LOW);
@@ -64,6 +68,7 @@ String sendCommand(const char* cmd, unsigned long timeout = 1000) {
   return response;
 }
 
+
 void sendHTTPRequest(const char* host, const char* path, const char* payload) {
   flushSerialInput();  // Clear any buffered input
   sendCommand("AT+CIPSEND", 2000);
@@ -75,8 +80,8 @@ void sendHTTPRequest(const char* host, const char* path, const char* payload) {
   AIR780.print(request);
   AIR780.write(0x1A);
   AIR780.flush();
-#ifdef ENABLE_USB_SERIAL
 
+#ifdef ENABLE_USB_SERIAL
   logToSerial("[Sent request:]");
   logToSerial(request.c_str());
   logToSerial("[HTTP request sent]");
@@ -118,94 +123,35 @@ void sendHTTPRequest(const char* host, const char* path, const char* payload) {
   }
 }
 
+void shutdownModem() {
+  logToSerial("Shutting down modem...");
 
-void setup() {
-#ifdef ENABLE_BLINK
-  pinMode(ledPinBlink, OUTPUT);
-#endif
-#ifdef ENABLE_USB_SERIAL
-  SerUSB.begin(9600);
-  while (!SerUSB)
-    ;
-#endif
-  AIR780.setTX(0);       // GPIO0
-  AIR780.setRX(1);       // GPIO1
-  AIR780.begin(115200);  // Default for AIR780
+  sendCommand("AT+CIPCLOSE", 1000);   // Close TCP
+  sendCommand("AT+CIPSHUT", 2000);    // Shut IP stack
+  sendCommand("AT+CGATT=0", 1000);    // Detach from GPRS
+  sendCommand("AT+CFUN=0", 1000);     // Minimum functionality mode
 
-  logToSerial("Initializing AIR780 module...");
-  delay(2000);
+  shortBlinks(2);  // Feedback
+  logToSerial("Modem in low-power mode.");
+}
 
-  logToSerial("Resetting modem...");
-  sendCommand("AT+CIPCLOSE", 1000);  // Close TCP if open
-  sendCommand("AT+CIPSHUT", 2000);   // Shut down IP stack
-  sendCommand("AT+CRESET", 5000);    // Full soft reset
-  delay(3000);                       // Give time to boot up
+void wakeModem() {
+  logToSerial("Waking modem...");
 
-  // Optionally wait for "READY"
-  for (int i = 0; i < 10; i++) {
-    String resp = sendCommand("AT", 1000);
-    if (resp.indexOf("OK") >= 0) {
-      logToSerial("Modem is ready.");
-      break;
-    }
-    delay(500);
-  }
-#ifdef ENABLE_BLINK
-  shortBlinks(3);
-#endif
-
-  //runDiagnostics();
+  sendCommand("AT+CFUN=1", 3000);     // Restore full functionality
+  delay(2000);                        // Give time to come up
 
   if (!waitForReady()) {
-    shortBlinks(4, true);  // four flashes incate problem with AIR780 module
-    return;
-  }
-  configureAPN("internet");  // Replace with your real APN
-  attachGPRS();
-
-  //const char* host = "chemedata.github.io/ontologies/chemedata/playground/chemedata.owl";//"www.neverssl.com";
-
-  const int port = 80;
-  const int maxAttempts = 3;
-
-  bool connected = false;
-  for (int attempt = 1; attempt <= maxAttempts; attempt++) {
-    logToSerial("[Attempt ");
-    logToSerial(String(attempt).c_str());
-    logToSerial("] Connecting...");
-    if (testHttpBin) {
-      if (connectTCP(hostTestHttpBin, port)) {
-        connected = true;
-        break;
-      }
-    } else {
-      if (connectTCP(host, port)) {
-        connected = true;
-        break;
-      }
-    }
-
-
-    delay(2000);  // wait before retry
-  }
-
-  if (connected) {
-
-
-    if (testHttpBin) {
-      sendHTTPRequest("httpbin.org", "/post", "device=AIR780&value=123");
-    } else {
-      sendHTTPRequest("httpbin.org", "/post", "device=AIR780&value=123");
-    }
-
+    logToSerial("Modem failed to wake up.");
+    shortBlinks(4, true);
   } else {
-    logToSerial("All connection attempts failed. Giving up.");
-    shortBlinks(5, true);
+    configureAPN("internet");  // Your APN here
+    attachGPRS();
+    logToSerial("Modem is ready after wake.");
   }
 }
-void loop() {
-  passthroughSerial();  // Let user interact manually
-}
+
+
 
 void flushSerialInput() {
 #ifdef ENABLE_USB_SERIAL
@@ -222,6 +168,7 @@ bool connectTCP(const char* host, int port) {
   String cmd = String("AT+CIPSTART=\"TCP\",\"") + String(host) + "\"," + port;
   AIR780.println(cmd);
   logToSerial(String(">> " + cmd).c_str());
+  logToSerial("Returned data...");
 
   String response = "";
   unsigned long start = millis();
@@ -244,6 +191,7 @@ bool connectTCP(const char* host, int port) {
   logToSerial("❌ Failed to connect.");
   return false;
 }
+
 
 
 void sendHTTPRequestOLDnotWorking(const char* host) {
@@ -320,8 +268,6 @@ void passthroughSerial() {
 #endif
   }
 }
-
-
 
 void sendAT(const char* cmd, unsigned long timeout = 1000) {
   AIR780.println(cmd);
@@ -452,4 +398,94 @@ void attachGPRS() {
   delay(1000);
   sendCommand("AT+CGPADDR=1");
   delay(1000);
+}
+
+
+void sendDataOnce(const char* data) {
+  if (!waitForReady()) {
+    shortBlinks(4, true);  // AIR780 problem
+    return;
+  }
+  configureAPN("internet");
+  attachGPRS();
+
+  const int maxAttempts = 3;
+  bool connected = false;
+  for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+    logToSerial("[Attempt ", false);
+    logToSerial(String(attempt).c_str(), false);
+    logToSerial("/", false);
+    logToSerial(String(maxAttempts).c_str(), false);
+    logToSerial("] Connecting...");
+    if ((testHttpBin && connectTCP(hostTestHttpBin, port)) ||
+        (!testHttpBin && connectTCP(host, port))) {
+      connected = true;
+      break;
+    }
+    delay(2000);
+  }
+
+  if (connected) {
+    if (testHttpBin) {
+      sendHTTPRequest("httpbin.org", "/post", "device=AIR780&value=128");
+    } else {
+      sendHTTPRequest(host, "/submit", data);
+    }
+  } else {
+    logToSerial("All connection attempts failed. Giving up.");
+    shortBlinks(5, true);
+  }
+}
+
+
+
+void setup() {
+#ifdef ENABLE_BLINK
+  pinMode(ledPinBlink, OUTPUT);
+#endif
+#ifdef ENABLE_USB_SERIAL
+  SerUSB.begin(9600);
+  while (!SerUSB)
+    ;
+#endif
+  AIR780.setTX(0);       // GPIO0
+  AIR780.setRX(1);       // GPIO1
+  AIR780.begin(115200);  // Default for AIR780
+
+  logToSerial("Initializing AIR780 module...");
+  delay(2000);
+
+  logToSerial("Resetting modem...");
+  sendCommand("AT+CIPCLOSE", 1000);  // Close TCP if open
+  sendCommand("AT+CIPSHUT", 2000);   // Shut down IP stack
+  sendCommand("AT+CRESET", 5000);    // Full soft reset
+  delay(3000);                       // Give time to boot up
+
+  // Optionally wait for "READY"
+  for (int i = 0; i < 10; i++) {
+    String resp = sendCommand("AT", 1000);
+    if (resp.indexOf("OK") >= 0) {
+      logToSerial("Modem is ready.");
+      break;
+    }
+    delay(500);
+  }
+#ifdef ENABLE_BLINK
+  shortBlinks(3);
+#endif
+
+  //runDiagnostics();
+}
+
+void loop() {
+  // passthroughSerial();  // Let user interact manually
+  wakeModem();  // Power up network stack
+  counter++;
+  String mainData = "device=AIR780&value=" + String(counter);
+  sendDataOnce(mainData.c_str());  // Send to server
+
+  shutdownModem();  // Shut everything down
+
+  //logToSerial("Sleeping for 1 hour...");delay(3600000);  // Wait 1 hour (60 min × 60 sec × 1000 ms)
+  logToSerial("Sleeping for 1 min...");delay(60000);  // Wait 1 min (60 sec × 1000 ms)
 }

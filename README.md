@@ -36,11 +36,11 @@ Optional: onboard LED (e.g., GPIO25 on Pico)
 
 ## create and install server
 
-in air780-backend/server.js
-
+For local tests
 ```zsh
-npm install
 
+echo "install node modules if needed"
+npm install
 echo "build server"
 docker build --platform=linux/amd64 -t air780-server .
 
@@ -76,41 +76,32 @@ echo "related commands"
 echo "docker container prune ---- if needed after        "
 echo "open http://localhost:3000/data in browser → should return [] at start"
 
-
-
 ```
 
-
+Install on server accepting http (not https)
+we used https://app.jpc.infomaniak.com/
 
 ```zsh
 # brew install cloudflared
 docker run --name air780-server -p 3000:3000 air780-server
-cloudflared tunnel --url http://localhost:3000
-echo "add three entries to server" 
 
-curl -X POST http://10.113.248.55:3000/submit -H "Content-Type: application/x-www-form-urlencoded" -d "device=AIR780&value=123"
-curl -X POST http://damserv.duckdns.org:3000/submit -H "Content-Type: application/x-www-form-urlencoded" -d "device=AIR780&value=123"
-curl -X POST https://picogprsclient.onrender.com/submit -H "Content-Type: application/x-www-form-urlencoded" -d "device=AIR780&value=124"
-curl -X POST https://picogprsclient.onrender.com/submit -H "Content-Type: application/x-www-form-urlencoded" -d "device=AIR780&value=textInput"
-curl -X POST https://picogprsclient.onrender.com/submit -H "Content-Type: application/x-www-form-urlencoded" -d "device=AIR78ddddd0&value=textInput"
+echo "add entries to server" 
 
-curl --data "device=AIR780&value=123" https://10.113.248.55:3000/submit
-curl --data "device=AIR780&value=123" https://damserv.duckdns.org:3000/submit
-curl --data "device=AIR780&value=123" https://picogprsclient.onrender.com/submit
-curl --data "device=AIR780&value=125" https://picogprsclient.onrender.com/submit
-curl --data "device=AIR780&value=textInput" https://picogprsclient.onrender.com/submit
-curl --data "device=AIR78ddddd0&value=textInput" https://picogprsclient.onrender.com/submit
+curl -X POST http://193.134.93.138:3000/submit -H "Content-Type: application/x-www-form-urlencoded" -d "device=AIR780&value=123"
+curl -X POST http://193.134.93.138:3000/submit -H "Content-Type: application/x-www-form-urlencoded" -d "device=AIR780&value=124"
+curl -X POST http://193.134.93.138:3000/submit -H "Content-Type: application/x-www-form-urlencoded" -d "device=AIR780&value=125"
+curl -X POST http://193.134.93.138:3000/submit -H "Content-Type: application/x-www-form-urlencoded" -d "device=AIZZR780&value=0"
 
-
-echo "open in browser https://picogprsclient.onrender.com/data or store all data :"
-wget https://picogprsclient.onrender.com/data -O test/dataStored_OnRender.json
+echo "open in browser http://193.134.93.138:3000/ or store all data :"
+wget http://193.134.93.138:3000/data -O test/dataStored.json
 
 echo "get single element"
-wget "https://picogprsclient.onrender.com/data?index=0" -O test/dataStored0_OnRender.json
+wget "http://193.134.93.138:3000/data?index=0" -O test/dataStored0.json
 
 echo "get single device remove from main arrays"
-wget "https://picogprsclient.onrender.com/data?device=AIR780" -O test/dataStored_AIR780_OnRender.json
-wget "http://10.113.248.55:3000/data?device=AIR780" -O test/dataStored_AIR780_OnRender.json
+wget "http://193.134.93.138:3000/data?device=AIR780" -O test/dataStored_AIR780_tmp.json;
+cat test/dataStored_AIR780_tmp.json >> test/dataStored_AIR780.json
+rm test/dataStored_AIR780_tmp.json
 
 
 echo "set up duckdns at https://www.duckdns.org/domains"
@@ -121,5 +112,27 @@ echo "set up duckdns at https://www.duckdns.org/domains"
 echo "look at ip at https://salt.box/2.0/gui/#/internetConnectivity/status"
 
 wget "http://damserv.duckdns.org:3000/data" -O -
-wget "http://10.113.248.55:3000/data" -O -
-damserv
+
+
+
+
+ON jpc (formerly jelastic)
+have a Docker Engine CE, with a Engine Node inside
+From the later click the terminal icon "web ssh"
+and paste all the following:
+
+git clone https://github.com/djeanner/PicoGPRSClient.git
+cd PicoGPRSClient
+docker build --platform=linux/amd64 -t air780-server .
+docker run -d --name air780-server -p 3000:3000 air780-server
+echo "check running:"
+docker ps
+
+
+
+cd PicoGPRSClient
+git pull
+docker stop air780-server
+docker rm air780-server
+docker build -t air780-server .
+docker run -d --name air780-server -p 3000:3000 air780-server
