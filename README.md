@@ -101,7 +101,6 @@ rm test/dataStored_AIR780_tmp.json test/tmp
 
 ## setting up server
 
-
 On jpc (formerly jelastic) 
 have a Docker Engine CE, with a Engine Node inside
 From the later click the terminal icon "web ssh"
