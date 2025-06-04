@@ -5,12 +5,13 @@
 // gravity board / pi pico
 // GND black/ 37
 // VCC red  / 40
-// Rx blue  / 1
-// Tx green / 2
+// Rx blue  / 1 or 6 see setTX
+// Tx green / 2 or 7 see setRX
 
 int setNumber = 100; // sent to server
 bool verbose = true;  // Set to false to reduce serial prints
 unsigned long counter = 0;
+const String deviceName = "AIR780";
 
 #define AIR780 Serial1
 #define ENABLE_BLINK  // Comment this line to disable LED blinking
@@ -434,8 +435,8 @@ void setup() {
   while (!SerUSB)
     ;
 #endif
-  AIR780.setTX(0);       // GPIO0
-  AIR780.setRX(1);       // GPIO1
+  AIR780.setTX(4);       // 0: GPIO0 or 4:GPIO4
+  AIR780.setRX(5);       // 1: GPIO1 or 5:GPIO5
   AIR780.begin(115200);  // Default for AIR780
 
   logToSerial("Initializing AIR780 module...");
@@ -462,16 +463,22 @@ void setup() {
 
   //runDiagnostics();
 }
-
 void loop() {
-  wakeModem();  // Power up network stack
   counter++;
-  String mainData = "device=AIR780&set=" + String(setNumber) + "&value=" + String(counter);
+
+  wakeModem();  // Power up network stack
+
+  String mainData = ""; 
+  String separator = "&";
+  mainData += "device=" + deviceName;
+  mainData += separator;
+  mainData += "setNumber=" + String(setNumber);
+  mainData += separator;
+  mainData += "value=" + String(counter);
   sendDataOnce(mainData.c_str());  // Send to server up to 200–500 mA for AIT780EU
 
   shutdownModem();  // Shut everything down ~5–10 mA for AIT780EU
 
-  //logToSerial("Sleeping for 1 hour...");delay(3600000);  // Wait 1 hour (60 min × 60 sec × 1000 ms)
   logToSerial("Sleeping for 1 min...");
   delay(60000);  // Wait 1 min (60 sec × 1000 ms)
 }
