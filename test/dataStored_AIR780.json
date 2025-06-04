@@ -296,5 +296,233 @@
     "device": "AIR780",
     "set": "2",
     "value": "20"
+  },
+  {
+    "timestamp": "2025-06-03T11:21:07.295Z",
+    "device": "AIR780",
+    "set": "2",
+    "value": "1"
+  },
+  {
+    "timestamp": "2025-06-03T11:22:44.083Z",
+    "device": "AIR780",
+    "set": "2",
+    "value": "2"
+  },
+  {
+    "timestamp": "2025-06-03T11:24:20.835Z",
+    "device": "AIR780",
+    "set": "2",
+    "value": "3"
+  },
+  {
+    "timestamp": "2025-06-03T11:25:57.640Z",
+    "device": "AIR780",
+    "set": "2",
+    "value": "4"
+  },
+  {
+    "timestamp": "2025-06-03T11:27:35.625Z",
+    "device": "AIR780",
+    "set": "2",
+    "value": "5"
+  },
+  {
+    "timestamp": "2025-06-03T11:29:12.483Z",
+    "device": "AIR780",
+    "set": "2",
+    "value": "6"
+  },
+  {
+    "timestamp": "2025-06-03T11:30:49.340Z",
+    "device": "AIR780",
+    "set": "2",
+    "value": "7"
+  },
+  {
+    "timestamp": "2025-06-03T11:32:26.174Z",
+    "device": "AIR780",
+    "set": "2",
+    "value": "8"
+  },
+  {
+    "timestamp": "2025-06-03T12:13:35.453Z",
+    "device": "AIR780",
+    "set": "2",
+    "value": "1"
+  },
+  {
+    "timestamp": "2025-06-03T12:15:12.359Z",
+    "device": "AIR780",
+    "set": "2",
+    "value": "2"
+  },
+  {
+    "timestamp": "2025-06-03T12:16:49.156Z",
+    "device": "AIR780",
+    "set": "2",
+    "value": "3"
+  },
+  {
+    "timestamp": "2025-06-03T12:18:26.018Z",
+    "device": "AIR780",
+    "set": "2",
+    "value": "4"
+  },
+  {
+    "timestamp": "2025-06-03T12:20:02.770Z",
+    "device": "AIR780",
+    "set": "2",
+    "value": "5"
+  },
+  {
+    "timestamp": "2025-06-03T12:21:39.540Z",
+    "device": "AIR780",
+    "set": "2",
+    "value": "6"
+  },
+  {
+    "timestamp": "2025-06-03T12:23:16.297Z",
+    "device": "AIR780",
+    "set": "2",
+    "value": "7"
+  },
+  {
+    "timestamp": "2025-06-03T12:24:53.168Z",
+    "device": "AIR780",
+    "set": "2",
+    "value": "8"
+  },
+  {
+    "timestamp": "2025-06-03T12:26:30.042Z",
+    "device": "AIR780",
+    "set": "2",
+    "value": "9"
+  },
+  {
+    "timestamp": "2025-06-03T12:28:06.896Z",
+    "device": "AIR780",
+    "set": "2",
+    "value": "10"
+  },
+  {
+    "timestamp": "2025-06-03T12:29:43.753Z",
+    "device": "AIR780",
+    "set": "2",
+    "value": "11"
+  },
+  {
+    "timestamp": "2025-06-03T12:31:20.526Z",
+    "device": "AIR780",
+    "set": "2",
+    "value": "12"
+  },
+  {
+    "timestamp": "2025-06-03T12:32:57.321Z",
+    "device": "AIR780",
+    "set": "2",
+    "value": "13"
+  },
+  {
+    "timestamp": "2025-06-03T12:34:34.086Z",
+    "device": "AIR780",
+    "set": "2",
+    "value": "14"
+  },
+  {
+    "timestamp": "2025-06-03T12:36:10.957Z",
+    "device": "AIR780",
+    "set": "2",
+    "value": "15"
+  },
+  {
+    "timestamp": "2025-06-03T12:37:47.797Z",
+    "device": "AIR780",
+    "set": "2",
+    "value": "16"
+  },
+  {
+    "timestamp": "2025-06-03T12:39:24.531Z",
+    "device": "AIR780",
+    "set": "2",
+    "value": "17"
+  },
+  {
+    "timestamp": "2025-06-03T12:41:01.333Z",
+    "device": "AIR780",
+    "set": "2",
+    "value": "18"
+  },
+  {
+    "timestamp": "2025-06-03T12:42:38.069Z",
+    "device": "AIR780",
+    "set": "2",
+    "value": "19"
+  },
+  {
+    "timestamp": "2025-06-03T12:44:14.853Z",
+    "device": "AIR780",
+    "set": "2",
+    "value": "20"
+  },
+  {
+    "timestamp": "2025-06-03T12:45:51.592Z",
+    "device": "AIR780",
+    "set": "2",
+    "value": "21"
+  },
+  {
+    "timestamp": "2025-06-03T12:47:28.352Z",
+    "device": "AIR780",
+    "set": "2",
+    "value": "22"
+  },
+  {
+    "timestamp": "2025-06-03T14:07:16.553Z",
+    "device": "AIR780",
+    "set": "2",
+    "value": "1"
+  },
+  {
+    "timestamp": "2025-06-03T14:10:31.693Z",
+    "device": "AIR780",
+    "set": "2",
+    "value": "1"
+  },
+  {
+    "timestamp": "2025-06-03T14:12:08.580Z",
+    "device": "AIR780",
+    "set": "2",
+    "value": "2"
+  },
+  {
+    "timestamp": "2025-06-03T14:13:45.367Z",
+    "device": "AIR780",
+    "set": "2",
+    "value": "3"
+  },
+  {
+    "timestamp": "2025-06-03T14:15:22.240Z",
+    "device": "AIR780",
+    "set": "2",
+    "value": "4"
+  },
+  {
+    "timestamp": "2025-06-03T14:16:59.047Z",
+    "device": "AIR780",
+    "set": "2",
+    "value": "5"
+  },
+  {
+    "timestamp": "2025-06-03T14:18:35.884Z",
+    "device": "AIR780",
+    "set": "2",
+    "value": "6"
+  },
+  {
+    "timestamp": "2025-06-03T14:20:12.674Z",
+    "device": "AIR780",
+    "set": "2",
+    "value": "7"
   }
 ]

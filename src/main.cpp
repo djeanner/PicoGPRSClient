@@ -1,5 +1,6 @@
 #include "secrets.h"
 
+
 // for pi pico with a gravity uart (AIR7880EU chip) 4G CAT I mocules V1.0 connected with
 // gravity board / pi pico
 // GND black/ 37
@@ -7,13 +8,18 @@
 // Rx blue  / 1
 // Tx green / 2
 
-const int setNumber = 3; // sent to server
+int setNumber = 100; // sent to server
 bool verbose = true;  // Set to false to reduce serial prints
 unsigned long counter = 0;
 
 #define AIR780 Serial1
 #define ENABLE_BLINK  // Comment this line to disable LED blinking
 // #define ENABLE_USB_SERIAL  // Comment this line to disable terminal connection to usb serial port
+#define SAVE_SET_EEPROM // disable to avoid using flash memory
+
+#ifdef SAVE_SET_EEPROM
+#include <EEPROM.h>
+#endif
 
 #ifdef ENABLE_BLINK
 const int ledPinBlink = 25;  // Onboard LED pin on Raspberry Pi Pico
@@ -389,9 +395,42 @@ void sendDataOnce(const char* data) {
 }
 
 void setup() {
+
+
+
+//////////////////////////////////////// save data in EEPROM // start
+#ifdef SAVE_SET_EEPROM
+  EEPROM.begin(512); // Initialize 512 bytes
+  const int addr = 0;
+  const int magicAddr = addr + sizeof(int);
+  const int MAGIC_VALUE = 0xABCD;
+
+  int setNumber = 0;
+  int magic = 0;
+
+  EEPROM.get(magicAddr, magic);
+
+  if (magic == MAGIC_VALUE) {
+    // Value is valid, increment it
+    EEPROM.get(addr, setNumber);
+    setNumber++;
+    EEPROM.put(addr, setNumber);
+  } else {
+    // First time use, initialize value and set magic number
+    setNumber = 0;
+    EEPROM.put(addr, 0);
+    EEPROM.put(magicAddr, MAGIC_VALUE);
+  }
+  EEPROM.commit(); // Only one commit needed
+#endif
+//////////////////////////////////////// save data in EEPROM // end
+
+
+
 #ifdef ENABLE_BLINK
   pinMode(ledPinBlink, OUTPUT);
 #endif
+
 #ifdef ENABLE_USB_SERIAL
   SerUSB.begin(9600);
   while (!SerUSB)

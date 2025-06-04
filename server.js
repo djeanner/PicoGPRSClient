@@ -12,8 +12,10 @@ app.use(express.json());
 app.post("/submit", (req, res) => {
 	const data = req.body;
 	const date = new Date().toISOString();
+	const zurichTime = new Date().toLocaleString('sv-SE', {timeZone:'Europe/Zurich'});
 	const entry = {
 		timestamp: date,
+		zuDate: zurichTime,
 		...data,
 	};
 	if (entry.device) {
