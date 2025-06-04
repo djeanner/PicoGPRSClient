@@ -3,17 +3,19 @@
 
 // for pi pico with a gravity uart (AIR7880EU chip) 4G CAT I mocules V1.0 connected with
 // gravity board / pi pico
-// GND black/ 37
-// VCC red  / 40
-// Rx blue  / 1 or 6 see setTX
-// Tx green / 2 or 7 see setRX
+// GND black/ pin 37
+// VCC red  / pin 40
+// Rx blue  / pin 1 GPIO0 Serial1 or pin 6 GPIO4 Serial2 see setTX
+// Tx green / pin 2 GPIO1 Serial1 or pin 7 GPIO5 Serial2 see setRX
+#define AIR780 Serial2 // Serial1 or Serial2
+#define AIR780SER_TX 4 // 0 GPIO0 pin 1 for Serial1 or 4 GPIO4 pin 6 for Serial2
+#define AIR780SER_RX 5 // 1 GPIO0 pin 2 for Serial1 or 5 GPIO4 pin 7 for Serial2
 
 int setNumber = 100; // sent to server
 bool verbose = true;  // Set to false to reduce serial prints
 unsigned long counter = 0;
 const String deviceName = "AIR780";
 
-#define AIR780 Serial1
 #define ENABLE_BLINK  // Comment this line to disable LED blinking
 // #define ENABLE_USB_SERIAL  // Comment this line to disable terminal connection to usb serial port
 #define SAVE_SET_EEPROM // disable to avoid using flash memory
@@ -435,8 +437,8 @@ void setup() {
   while (!SerUSB)
     ;
 #endif
-  AIR780.setTX(4);       // 0: GPIO0 or 4:GPIO4
-  AIR780.setRX(5);       // 1: GPIO1 or 5:GPIO5
+  AIR780.setTX(AIR780SER_TX);       // 0: GPIO0 or 4:GPIO4
+  AIR780.setRX(AIR780SER_RX);       // 1: GPIO1 or 5:GPIO5
   AIR780.begin(115200);  // Default for AIR780
 
   logToSerial("Initializing AIR780 module...");
