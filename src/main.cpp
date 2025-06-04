@@ -403,11 +403,9 @@ void setup() {
   EEPROM.begin(512); // Initialize 512 bytes
   const int addr = 0;
   const int magicAddr = addr + sizeof(int);
-  const int MAGIC_VALUE = 0xABCD;
+  const int MAGIC_VALUE = 0xABC0;
 
-  int setNumber = 0;
   int magic = 0;
-
   EEPROM.get(magicAddr, magic);
 
   if (magic == MAGIC_VALUE) {

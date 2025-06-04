@@ -118,10 +118,12 @@ docker ps
 to update  ...
 
 ```zsh
+echo "start update"
 cd PicoGPRSClient
 git pull
 docker stop air780-server
 docker rm air780-server
 docker build -t air780-server .
 docker run -d --name air780-server -p 3000:3000 air780-server
+echo "done"
 ```
