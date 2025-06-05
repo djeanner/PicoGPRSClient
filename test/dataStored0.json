@@ -1,7 +1,23 @@
 {
-  "timestamp": "2025-06-04T13:32:24.091Z",
-  "zuDate": "2025-06-04 15:32:24",
+  "timestamp": "2025-06-05T10:07:58.220Z",
+  "zuDate": "2025-06-05 12:07:58",
   "device": "AIR780",
-  "setNumber": "5",
-  "value": "1"
+  "setNumber": "1",
+  "value": "7",
+  "GPS": "runStatus=1",
+  "fixStatus": "1",
+  "utc": "20250605100742.000",
+  "lat": "46.219207",
+  "lon": "6.147659",
+  "alt": "408.597",
+  "speed": "0.00",
+  "course": "94.8",
+  "fixMode": "1",
+  "hdop": "1.1",
+  "pdop": "1.4",
+  "vdop": "0.9",
+  "satsInView": "13",
+  "satsUsed": "8",
+  "glonassUsed": "4",
+  "cn0max": "0"
 }
