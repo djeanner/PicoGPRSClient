@@ -30,7 +30,7 @@ int setNumber = 100;  // sent to server
 bool verbose = true;  // Set to false to reduce serial prints
 unsigned long counter = 0;
 const String deviceName = "AIR780";
-
+std::vector<String> arrayStringNotSend;
 #ifdef SAVE_SET_EEPROM
 #include <EEPROM.h>
 #endif
@@ -57,6 +57,7 @@ private:
   unsigned long baseMilliInitial = 0;
   unsigned long baseMilli = 0;
   long syncErrorSec = 0;
+  long storedGpsSeconds = 0;
   bool synced = false;
   double errorSecPerDay = 0.0;
   bool isLeapYear(int y) const {
@@ -95,17 +96,17 @@ public:
       unsigned long gpsSeconds = secondsSinceEpoch(newYear, newMonth, newDay, newHour, newMinute, newSecond);
 
       // Only calculate error if we already have a base time
-
       if (baseMilliInitial != 0) {
         const unsigned long elapsedMillis = curMillis - baseMilliInitial;
-        unsigned long internalSeconds = secondsSinceEpoch(year, month, day, hour, minute, second) + elapsedMillis / 1000;
-        syncErrorSec = ((long)gpsSeconds - (long)internalSeconds);
+        unsigned long internalSeconds = storedGpsSeconds + elapsedMillis / 1000;
+        syncErrorSec = (long)gpsSeconds - (long)internalSeconds;
         errorSecPerDay = (double)syncErrorSec / ((double)elapsedMillis / 86400000.0);  // ms to days
       } else {
         baseMilliInitial = curMillis;
+        storedGpsSeconds = gpsSeconds;
+        synced = true;
       }
 
-      // Now update the actual time after sync
       year = newYear;
       month = newMonth;
       day = newDay;
@@ -113,7 +114,6 @@ public:
       minute = newMinute;
       second = newSecond;
       baseMilli = curMillis;
-      synced = true;
     }
   }
   long getSyncErrorSec() const {
@@ -394,7 +394,8 @@ String sendCommand(const char* cmd, unsigned long timeout = 1000) {
 }
 
 
-void sendHTTPRequest(const char* host, const char* path, const char* payload) {
+bool sendHTTPRequest(const char* host, const char* path, const char* payload) {
+
   flushSerialInput();  // Clear any buffered input
   sendCommand("AT+CIPSEND", 2000);
   delay(500);
@@ -435,7 +436,9 @@ void sendHTTPRequest(const char* host, const char* path, const char* payload) {
 
   if (!fullMessage.endsWith("CLOSED\r\n")) {
     disconnectTCP();
+    return false;
   }
+  return true;
 }
 
 void shutdownModem() {
@@ -499,46 +502,6 @@ bool connectTCP(const char* host, int port) {
   }
   logToSerial("❌ Failed to connect.");
   return false;
-}
-
-void sendHTTPRequestOLDnotWorking(const char* host) {
-  flushSerialInput();  // ✅ Wipe out any leftover serial input
-
-  while (AIR780.available()) AIR780.read();
-
-  String request = String("AT+CIPSTART=\"TCP\",\"") + String(host) + String("\",80");  // Connect to ESP32 IP
-  AIR780.println(request);
-  delay(2000);  // Wait for connection
-
-  String requestLength = "AT+CIPSEND=" + String(request.length());
-  AIR780.println(requestLength);  // Send HTTP request length
-  delay(1000);
-
-  logToSerial("[Sent request:]");
-  //SerUSB.println(httpRequest);
-  logToSerial(request.c_str());
-  logToSerial("[HTTP request sent]");
-
-  //String httpRequest = String("GET / HTTP/1.1\r\nHost: \"") + String(host) + String("\"\r\nConnection: keep-alive\r\n\r\n");//close
-  String httpRequest = String("GET / HTTP/1.1\r\nHost: \"") + String(host) + String("\"\r\nConnection: close\r\n\r\n");  //close
-  AIR780.print(httpRequest);
-  delay(1000);  // Wait for the request to be sent
-
-  logToSerial("[HTTP request sent]");
-
-  String fullMessage = "";
-  unsigned long timeoutStart = millis();
-  while (millis() - timeoutStart < 15000) {
-    if (AIR780.available()) {
-      char c = AIR780.read();
-      fullMessage += c;
-      timeoutStart = millis();  // reset timeout on activity
-    }
-  }
-
-  logToSerial("[Server Response Start]");
-  logToSerial(fullMessage.c_str());
-  logToSerial("[Server Response End]");
 }
 
 void disconnectTCP() {
@@ -676,10 +639,10 @@ void attachGPRS() {
   delay(1000);
 }
 
-void sendDataOnce(const char* data) {
+bool sendDataOnce(const String data) {
   if (!waitForReady()) {
     shortBlinks(4, true);  // AIR780 problem
-    return;
+    return false;
   }
   configureAPN("internet");
   attachGPRS();
@@ -700,10 +663,12 @@ void sendDataOnce(const char* data) {
   }
 
   if (connected) {
-    sendHTTPRequest(host, "/submit", data);
+    const bool sendOK = sendHTTPRequest(host, "/submit", data.c_str());
+    return sendOK;
   } else {
     logToSerial("All connection attempts failed. Giving up.");
     shortBlinks(5, true);
+    return false;
   }
 }
 
@@ -787,7 +752,7 @@ void setup() {
 }
 void loop() {
   counter++;
-
+  bool sendOK;
   String mainData = "";
   String separator = "&";
   mainData += "device=" + deviceName;
@@ -821,9 +786,27 @@ void loop() {
 
 #endif  // GPS_MODULE_DATA
 
-  wakeModem();                     // Power up network stack
-  sendDataOnce(mainData.c_str());  // Send to server up to 200–500 mA for AIT780EU
-  shutdownModem();                 // Shut everything down ~5–10 mA for AIT780EU
+  wakeModem();                      // Power up network stack
+
+  // catchup if necessary
+  if (arrayStringNotSend.size() > 0) {
+    bool sendOK_catchUP;
+    for (int i = arrayStringNotSend.size() - 1; i >= 0; i -= 1) {
+      sendOK_catchUP = sendDataOnce(arrayStringNotSend.at(i) + separator + "catchUp=" + String(i));  // Send to server up to 200–500 mA for AIT780EU
+      if (sendOK_catchUP) {
+        arrayStringNotSend.erase(arrayStringNotSend.begin() + i);
+      } else {
+        break;
+      }
+    }
+  }
+
+  sendOK = sendDataOnce(mainData);  // Send to server up to 200–500 mA for AIT780EU
+  shutdownModem();                  // Shut everything down ~5–10 mA for AIT780EU
+
+  if (!sendOK) {
+    arrayStringNotSend.push_back(mainData);
+  }
 
   logToSerial("Sleeping for 10 min...");
   delay(600000);  // Wait 10 min (600 sec × 1000 ms)
