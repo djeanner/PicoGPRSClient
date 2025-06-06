@@ -96,7 +96,7 @@ wget "http://193.134.93.138:3000/data?index=0" -O - | jq >test/dataStored0.json
 echo "get single device remove from main arrays add incremenetally to test/dataStored_AIR780.json "
 wget "http://193.134.93.138:3000/data?device=AIR780" -O  test/dataStored_AIR780_tmp.json;
 jq -s '.[0] + .[1]' test/dataStored_AIR780.json test/dataStored_AIR780_tmp.json > test/tmp && mv test/tmp test/dataStored_AIR780.json
-rm test/dataStored_AIR780_tmp.json test/tmp
+rm test/dataStored_AIR780_tmp.json
 ```
 
 ## setting up server
