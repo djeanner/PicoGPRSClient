@@ -1,9 +1,11 @@
 #include "secrets.h"
 
-
 // MAIN MACROS
 #define GPS_MODULE_DATA
 #define AIR780_MODULE
+#define ENABLE_BLINK  // Comment this line to disable LED blinking
+// #define ENABLE_USB_SERIAL  // Comment this line to disable terminal connection to usb serial port
+#define SAVE_SET_EEPROM  // disable to avoid using flash memory
 
 #ifdef GPS_MODULE_DATA            // For SIM868 Using powerpins 36-40, 1,2,6,7,19,22 one groud (18,23)
 #define UART_PORT_SIM868 Serial1  // may need to change to Serial1 if change port (see below)
@@ -29,10 +31,6 @@ bool verbose = true;  // Set to false to reduce serial prints
 unsigned long counter = 0;
 const String deviceName = "AIR780";
 
-#define ENABLE_BLINK  // Comment this line to disable LED blinking
-// #define ENABLE_USB_SERIAL  // Comment this line to disable terminal connection to usb serial port
-#define SAVE_SET_EEPROM  // disable to avoid using flash memory
-
 #ifdef SAVE_SET_EEPROM
 #include <EEPROM.h>
 #endif
@@ -45,7 +43,135 @@ const int ledPinBlink = 25;  // Onboard LED pin on Raspberry Pi Pico
 #define SerUSB Serial  // Renamed to facilitate and debug (Serial is the USB ser port)
 #endif
 
+
+
 #ifdef GPS_MODULE_DATA  // For SIM868
+
+#define INCLUDE_GPS_COCK
+#ifdef INCLUDE_GPS_COCK
+// this class allows to calculate time from GPS time and determine error
+class GpsClock {
+private:
+  int year = 0, month = 0, day = 0;
+  int hour = 0, minute = 0, second = 0;
+  unsigned long baseMilliInitial = 0;
+  unsigned long baseMilli = 0;
+  long syncErrorSec = 0;
+  bool synced = false;
+  double errorSecPerDay = 0.0;
+  bool isLeapYear(int y) const {
+    return (y % 4 == 0 && (y % 100 != 0 || y % 400 == 0));
+  }
+
+  unsigned long secondsSinceEpoch(int y, int m, int d, int h, int min, int s) const {
+    const int daysInMonth[] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+    unsigned long days = 0;
+
+    for (int i = 1970; i < y; ++i) {
+      days += (isLeapYear(i) ? 366 : 365);
+    }
+
+    for (int i = 1; i < m; ++i) {
+      days += daysInMonth[i - 1];
+      if (i == 2 && isLeapYear(y)) days++;  // February in leap year
+    }
+
+    days += (d - 1);
+    return days * 86400UL + h * 3600UL + min * 60UL + s;
+  }
+
+public:
+  void syncFromUTC(const String& utc) {
+    if (utc.length() >= 14) {
+      const unsigned long curMillis = millis();
+
+      int newYear = utc.substring(0, 4).toInt();
+      int newMonth = utc.substring(4, 6).toInt();
+      int newDay = utc.substring(6, 8).toInt();
+      int newHour = utc.substring(8, 10).toInt();
+      int newMinute = utc.substring(10, 12).toInt();
+      int newSecond = utc.substring(12, 14).toInt();
+
+      unsigned long gpsSeconds = secondsSinceEpoch(newYear, newMonth, newDay, newHour, newMinute, newSecond);
+
+      // Only calculate error if we already have a base time
+
+      if (baseMilliInitial != 0) {
+        const unsigned long elapsedMillis = curMillis - baseMilliInitial;
+        unsigned long internalSeconds = secondsSinceEpoch(year, month, day, hour, minute, second) + elapsedMillis / 1000;
+        syncErrorSec = ((long)gpsSeconds - (long)internalSeconds);
+        errorSecPerDay = (double)syncErrorSec / ((double)elapsedMillis / 86400000.0);  // ms to days
+      } else {
+        baseMilliInitial = curMillis;
+      }
+
+      // Now update the actual time after sync
+      year = newYear;
+      month = newMonth;
+      day = newDay;
+      hour = newHour;
+      minute = newMinute;
+      second = newSecond;
+      baseMilli = curMillis;
+      synced = true;
+    }
+  }
+  long getSyncErrorSec() const {
+    return syncErrorSec;
+  }
+  double getErrorSecPerDay() const {
+    return errorSecPerDay;
+  }
+  bool isSynced() const {
+    return synced;
+  }
+
+  String getCurrentTimeString() const {
+    unsigned long elapsedMillis = millis() - baseMilli;
+    unsigned long totalSeconds = secondsSinceEpoch(year, month, day, hour, minute, second) + (elapsedMillis / 1000);
+
+    // Reconstruct time from seconds
+    int y = 1970;
+    unsigned long days = totalSeconds / 86400UL;
+    unsigned long secs = totalSeconds % 86400UL;
+
+    while (true) {
+      unsigned long int yearDays = isLeapYear(y) ? 366 : 365;
+      if (days >= yearDays) {
+        days -= yearDays;
+        ++y;
+      } else {
+        break;
+      }
+    }
+
+    int m = 1;
+    const int daysInMonth[] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+    while (m <= 12) {
+      unsigned long dim = daysInMonth[m - 1];
+      if (m == 2 && isLeapYear(y)) dim++;
+      if (days >= dim) {
+        days -= dim;
+        m++;
+      } else {
+        break;
+      }
+    }
+
+    int d = days + 1;
+    int h = secs / 3600;
+    int rem = secs % 3600;
+    int min = rem / 60;
+    int s = rem % 60;
+
+    char buf[32];
+    snprintf(buf, sizeof(buf), "%04d-%02d-%02d %02d:%02d:%02d", y, m, d, h, min, s);
+    return String(buf);
+  }
+};
+
+GpsClock gpsClock;
+#endif
 
 class GpsInfo {
 public:
@@ -91,15 +217,21 @@ public:
     satsUsed = fields[15].toInt();
     glonassUsed = fields[16].toInt();
     cn0max = fields[19].toInt();
+    numberValidGPSdata = 0;
+  }
+
+  String getOpenStreetMapLink() const {
+    return "https://www.openstreetmap.org/?mlat=" + String(lat, 6) + "&mlon=" + String(lon, 6);
   }
 
   String toJson() const {
-    return String("{") + "\"runStatus\":" + String(runStatus) + "," + "\"fixStatus\":" + String(fixStatus) + "," + "\"utc\":\"" + utc + "\"," + "\"lat\":" + String(lat, 6) + "," + "\"lon\":" + String(lon, 6) + "," + "\"alt\":" + String(alt, 3) + "," + "\"speed\":" + String(speed, 2) + "," + "\"course\":" + String(course, 1) + "," + "\"fixMode\":" + String(fixMode) + "," + "\"hdop\":" + String(hdop, 1) + "," + "\"pdop\":" + String(pdop, 1) + "," + "\"vdop\":" + String(vdop, 1) + "," + "\"satsInView\":" + String(satsInView) + "," + "\"satsUsed\":" + String(satsUsed) + "," + "\"glonassUsed\":" + String(glonassUsed) + "," + "\"cn0max\":" + String(cn0max) + "}";
+    return String("{") + "\"runStatus\":" + String(runStatus) + "," + "\"fixStatus\":" + String(fixStatus) + "," + "\"utc\":\"" + utc + "\"," + "\"lat\":" + String(lat, 6) + "," + "\"lon\":" + String(lon, 6) + "," + "\"alt\":" + String(alt, 3) + "," + "\"speed\":" + String(speed, 2) + "," + "\"course\":" + String(course, 1) + "," + "\"fixMode\":" + String(fixMode) + "," + "\"hdop\":" + String(hdop, 1) + "," + "\"pdop\":" + String(pdop, 1) + "," + "\"vdop\":" + String(vdop, 1) + "," + "\"satsInView\":" + String(satsInView) + "," + "\"satsUsed\":" + String(satsUsed) + "," + "\"glonassUsed\":" + String(glonassUsed) + "," + "\"cn0max\":" + String(cn0max) + "," + "\"numberValidGPSdata\":" + String(numberValidGPSdata) + "}";
   }
 
   String toAmpersandString() const {
-    return "runStatus=" + String(runStatus) + "&" + "fixStatus=" + String(fixStatus) + "&" + "utc=" + utc + "&" + "lat=" + String(lat, 6) + "&" + "lon=" + String(lon, 6) + "&" + "alt=" + String(alt, 3) + "&" + "speed=" + String(speed, 2) + "&" + "course=" + String(course, 1) + "&" + "fixMode=" + String(fixMode) + "&" + "hdop=" + String(hdop, 1) + "&" + "pdop=" + String(pdop, 1) + "&" + "vdop=" + String(vdop, 1) + "&" + "satsInView=" + String(satsInView) + "&" + "satsUsed=" + String(satsUsed) + "&" + "glonassUsed=" + String(glonassUsed) + "&" + "cn0max=" + String(cn0max);
+    return "runStatus=" + String(runStatus) + "&" + "fixStatus=" + String(fixStatus) + "&" + "utc=" + utc + "&" + "lat=" + String(lat, 6) + "&" + "lon=" + String(lon, 6) + "&" + "alt=" + String(alt, 3) + "&" + "speed=" + String(speed, 2) + "&" + "course=" + String(course, 1) + "&" + "fixMode=" + String(fixMode) + "&" + "hdop=" + String(hdop, 1) + "&" + "pdop=" + String(pdop, 1) + "&" + "vdop=" + String(vdop, 1) + "&" + "satsInView=" + String(satsInView) + "&" + "satsUsed=" + String(satsUsed) + "&" + "glonassUsed=" + String(glonassUsed) + "&" + "cn0max=" + String(cn0max) + "&" + "numberValidGPSdata=" + String(numberValidGPSdata) + "&" + "openStreetMap=https://www.openstreetmap.org/?mlat=" + String(lat, 6) + "%26mlon=" + String(lon, 6);
   }
+
 
   bool isValidFix() const {
     return fixStatus == 1;
@@ -584,11 +716,10 @@ void setup() {
   UART_PORT_SIM868.setTX(UART_PORT_SIM868TX);  // GPIO0
   UART_PORT_SIM868.setRX(UART_PORT_SIM868RX);  // GPIO1
   UART_PORT_SIM868.begin(115200);              // SIM868 default
-  sendATSIM868("AT+SLED=0", "OK");             // Disable status LED set to 1 to set back
 
   // checkStartSIM868();
-  powerOnOffSIM868();  // Pulses PWRKEY
-
+  powerOnOffSIM868();               // Pulses PWRKEY
+  sendATSIM868("AT+SLED=0", "OK");  // Disable status LED set to 1 to set back
 #endif
 
 //////////////////////////////////////// save data in EEPROM // start
@@ -669,12 +800,31 @@ void loop() {
   String gpsString = getGPSInfoSIM868();
   mainData += separator;
   mainData += "GPS=" + String(gpsString);
-#endif
+
+#ifdef INCLUDE_GPS_COCK
+  // get utc from gpsString
+  int start = gpsString.indexOf("utc=");
+  if (start != -1) {
+    start += 4;  // move past "utc="
+    int end = gpsString.indexOf('&', start);
+    if (end != -1 && start != -1) {
+      const String utc = gpsString.substring(start, end);
+      gpsClock.syncFromUTC(utc);
+      const double error = gpsClock.getErrorSecPerDay();
+      mainData += separator;
+      mainData += "gpsClockTime=" + gpsClock.getCurrentTimeString();
+      mainData += separator;
+      mainData += "errorSecPerDay=" + String(error);
+    }
+  }
+#endif  // INCLUDE_GPS_COCK
+
+#endif  // GPS_MODULE_DATA
 
   wakeModem();                     // Power up network stack
   sendDataOnce(mainData.c_str());  // Send to server up to 200–500 mA for AIT780EU
   shutdownModem();                 // Shut everything down ~5–10 mA for AIT780EU
 
-  logToSerial("Sleeping for 1 min...");
-  delay(60000);  // Wait 1 min (60 sec × 1000 ms)
+  logToSerial("Sleeping for 10 min...");
+  delay(600000);  // Wait 10 min (600 sec × 1000 ms)
 }
